@@ -9,7 +9,9 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Locale;
 
 import jxl.Workbook;
@@ -50,11 +52,19 @@ public class EntryPoint {
 	private WritableWorkbook excellFile;
 	private WritableSheet excellSheet;
 
-	HashSet<String> keysList;
+	private HashMap<String, ArrayList<String>> keysValueMap;
 
+	HashSet<String> keysList;
+	private File file;
+
+	/**
+	 * Start the file reading operations, creates necessary excel file, and
+	 * prepare to read android project
+	 */
 	private void startOperations() {
 		BufferedReader br;
 		keysList = new HashSet<String>();
+		keysValueMap = new HashMap<String, ArrayList<String>>();
 		askProjectName();
 
 		askProjectPath();
@@ -63,7 +73,22 @@ public class EntryPoint {
 			File projectPath = new File(ConstantData.PROJECT_PATH);
 			System.out.println(projectPath + " is a folder?"
 					+ (projectPath.isDirectory() ? " yes" : " no"));
+			file = new File("C:/StrToSprTest/" + ConstantData.PROJECT_NAME
+					+ ".xls");
+			if (!file.exists()) {
+				new File("C:/StrToSprTest/").mkdir();
+			}
+			try {
+				WorkbookSettings settings = new WorkbookSettings();
+				settings.setLocale(new Locale("en", "EN"));
+				settings.setUseTemporaryFileDuringWrite(true);
 
+				excellFile = Workbook.createWorkbook(file);
+				excellSheet = excellFile.createSheet("Translations", 0);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			if (projectPath.getName().equalsIgnoreCase("res")) {
 				System.out
 						.println("Congrats! You have just discovered a valuable treasure captain sparrow!!");
@@ -106,26 +131,21 @@ public class EntryPoint {
 					Node item = nodes.item(i);
 					String key = "" + item.getAttributes().getNamedItem("name");
 					int row = getIndexFromKey(key);
-					String value = item.getTextContent();
-					try {
-						if (row != -1 && column != -1)
-							addCell(excellSheet, column, row, value);
-					} catch (RowsExceededException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (WriteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (Exception e) {
-						// TODO: handle exception
-					}
 
+					ArrayList<String> values = keysValueMap.get(key);
+
+					String value = item.getTextContent();
+
+					if (value == null)
+						value = "";
+					values.add(value);
 				}
 
 			}
 		}
 	}
 
+	// I don't think we may need this method now. so no documentation of it.
 	private int getIndexFromKey(String key) {
 		String[] keys = new String[keysList.size()];
 		keys = keysList.toArray(keys);
@@ -136,6 +156,7 @@ public class EntryPoint {
 		return -1;
 	}
 
+	// I don't think we may need this method now. so no documentation of it.
 	private int findIndexOfLanguage(String columnName) {
 		for (int i = 0; i < ConstantData.LANGUAGES.length; i++) {
 			if (ConstantData.LANGUAGES[i].equalsIgnoreCase(columnName))
@@ -144,6 +165,14 @@ public class EntryPoint {
 		return -1;
 	}
 
+	/**
+	 * Get list of available languages provided from project path.
+	 * 
+	 * @param projectPath
+	 *            : Path of your project, must contain res folder
+	 * @param valuesFilter
+	 *            : {@link FilenameFilter} which filters only values folder
+	 */
 	private void getAvailableLanguages(File projectPath,
 			FilenameFilter valuesFilter) {
 		File[] folderList = projectPath.listFiles(valuesFilter);
@@ -164,18 +193,56 @@ public class EntryPoint {
 		ConstantData.LANGUAGES = availableLanguages;
 		getColumns(folderList);
 		getStringFiles(folderList);
-		try {
-			excellFile.write();
-			excellFile.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
+		writeIntoFile(false);
+	}
+
+	private void writeIntoFile(boolean canWriteFile) {
+		if (canWriteFile) {
+			try {
+				excellFile.write();
+				excellFile.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (Exception e) {
+				// TODO: handle exception
+				e.printStackTrace();
+			}
+		}else{
+			Iterator keysIterator = keysValueMap.keySet().iterator();
+			do{
+				
+				String key = (String) keysIterator.next();
+				
+				ArrayList<String> values = keysValueMap.get(key);
+				
+				System.out.println(key);
+				System.out.println("{");
+				for (String string : values) {
+					System.out.println("\t\t");
+					System.out.println(string);
+					
+				}
+				System.out.println("};");
+				
+			}while(keysIterator.hasNext());
 		}
 	}
 
+	/**
+	 * Adds a cell into excel sheet
+	 * 
+	 * @param sheet
+	 *            : Excell Sheet,where you have to write a string
+	 * @param column
+	 *            : Number of column where the cell is written.
+	 * @param row
+	 *            : Number of row where the cell is written
+	 * @param s
+	 *            : Data to be written in cell
+	 * @throws WriteException
+	 * @throws RowsExceededException
+	 */
 	private void addCell(WritableSheet sheet, int column, int row, String s)
 			throws WriteException, RowsExceededException {
 		Label label;
@@ -190,6 +257,12 @@ public class EntryPoint {
 		sheet.addCell(label);
 	}
 
+	/**
+	 * Fetches keys from the string.xml files of various languages
+	 * 
+	 * @param folderList
+	 *            : List of values(-) folder.
+	 */
 	private void getColumns(File[] folderList) {
 		for (File valuesVersion : folderList) {
 			System.out.println("Parsing xml from " + valuesVersion.getName()
@@ -198,41 +271,18 @@ public class EntryPoint {
 				File stringsDotXml = new File(valuesVersion, "strings.xml");
 				Document document = Utils.getXmlFromFile(stringsDotXml);
 				NodeList nodes = document.getElementsByTagName("string");
-				try {
-					WorkbookSettings settings = new WorkbookSettings();
-					settings.setLocale(new Locale("en", "EN"));
-					settings.setUseTemporaryFileDuringWrite(true);
-					File file = new File("C:/StrToSprTest/"
-							+ ConstantData.PROJECT_NAME + ".xls");
-					if (!file.exists()) {
-						new File("C:/StrToSprTest/").mkdir();
-					}
-					excellFile = Workbook.createWorkbook(file);
-					excellSheet = excellFile.createSheet("Translations", 0);
-					addHeaders();
 
-					for (int i = 0; i < nodes.getLength(); i++) {
-						Node item = nodes.item(i);
-						String key = ""
-								+ item.getAttributes().getNamedItem("name");
-						// System.out.println(key);
-						addCell(excellSheet, 0, i + 1, key);
-						keysList.add(key);
+				for (int i = 0; i < nodes.getLength(); i++) {
+					Node item = nodes.item(i);
+					String key = "" + item.getAttributes().getNamedItem("name");
+					// System.out.println(key);
+					// addCell(excellSheet, 0, i + 1, key);
+					addColumn(key);
 
-					}
-					System.out.println(keysList.size());
-					// excellFile.write();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-
-				} catch (RowsExceededException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (WriteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
 				}
+				System.out.println(keysList.size());
+				// excellFile.write();
+
 			}
 		}
 
@@ -263,6 +313,9 @@ public class EntryPoint {
 
 	}
 
+	/**
+	 * Asks user to enter project path
+	 */
 	private void askProjectPath() {
 		BufferedReader br;
 		System.out
@@ -279,6 +332,13 @@ public class EntryPoint {
 		}
 	}
 
+	/**
+	 * Asks user to enter project name
+	 * 
+	 * Future Feature: We shouldn't ask user to enter project name, instead ask
+	 * the project path: i.e. join this and askProjectPath methods so just by
+	 * entering project path we can fetch both things at once
+	 */
 	private void askProjectName() {
 		System.out.println("Time to enter project name: ");
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -292,6 +352,30 @@ public class EntryPoint {
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
+	}
+
+	/**
+	 * Adds a column in {@link HashMap}
+	 * 
+	 * @param columnName
+	 *            : Column name to check
+	 * @return <code>false</code> if the column is already exists, in the
+	 *         collection (we don't need to add it now) <code>true</code> if
+	 *         this column is sucessfully added in {@link HashMap}
+	 */
+	private boolean addColumn(String columnName) {
+
+		if (keysValueMap.containsKey(columnName)) {
+			// We already have a column so no need to add it again
+			return false;
+		} else {
+			// try to add into colloection
+			ArrayList<String> values = new ArrayList<String>();
+
+			keysValueMap.put(columnName, values);
+			return true;
+		}
+
 	}
 
 }
