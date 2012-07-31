@@ -193,11 +193,54 @@ public class EntryPoint {
 		ConstantData.LANGUAGES = availableLanguages;
 		getColumns(folderList);
 		getStringFiles(folderList);
-		writeIntoFile(false);
+		writeIntoFile();
 	}
 
-	private void writeIntoFile(boolean canWriteFile) {
-		if (canWriteFile) {
+	private void writeIntoFile() {
+			Iterator keysIterator = keysValueMap.keySet().iterator();
+			
+			int i =1;
+			int j=0;
+			do{
+				
+				String key = (String) keysIterator.next();
+				try {
+					String keyToEnter= key.substring("name=\"".length()).replaceAll("\"", "");
+					addCell(excellSheet, 0, i, keyToEnter);
+				} catch (RowsExceededException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (WriteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				ArrayList<String> values = keysValueMap.get(key);
+				
+				System.out.println(key);
+				System.out.println("{");
+				j=1;
+				for (String string : values) {
+					System.out.println("\t\t");
+					System.out.println(string);
+					try {
+						addCell(excellSheet, j, i, string);
+					} catch (RowsExceededException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (WriteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}	
+					j++;
+				}
+				System.out.println("};");
+				i++;
+			}while(keysIterator.hasNext());
+			
 			try {
 				excellFile.write();
 				excellFile.close();
@@ -208,25 +251,6 @@ public class EntryPoint {
 				// TODO: handle exception
 				e.printStackTrace();
 			}
-		}else{
-			Iterator keysIterator = keysValueMap.keySet().iterator();
-			do{
-				
-				String key = (String) keysIterator.next();
-				
-				ArrayList<String> values = keysValueMap.get(key);
-				
-				System.out.println(key);
-				System.out.println("{");
-				for (String string : values) {
-					System.out.println("\t\t");
-					System.out.println(string);
-					
-				}
-				System.out.println("};");
-				
-			}while(keysIterator.hasNext());
-		}
 	}
 
 	/**
@@ -264,6 +288,17 @@ public class EntryPoint {
 	 *            : List of values(-) folder.
 	 */
 	private void getColumns(File[] folderList) {
+		
+		try {
+			addHeaders();
+		} catch (WriteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		}
+		
 		for (File valuesVersion : folderList) {
 			System.out.println("Parsing xml from " + valuesVersion.getName()
 					+ "\n");
@@ -292,7 +327,7 @@ public class EntryPoint {
 		addHeader(excellSheet, 0, 0, "Keys");
 		if (ConstantData.LANGUAGES != null) {
 			for (int i = 0; i < ConstantData.LANGUAGES.length; i++) {
-				addCell(excellSheet, i + 1, 0, "" + ConstantData.LANGUAGES[i]);
+				addHeader(excellSheet, i + 1, 0, "" + ConstantData.LANGUAGES[i]);
 			}
 		}
 
