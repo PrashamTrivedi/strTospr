@@ -98,7 +98,27 @@ public class EntryPoint {
 					@Override
 					public boolean accept(File file, String name) {
 						// TODO Auto-generated method stub
-						return name.contains("values");
+						if (name.contains("values")) {
+							if (file.isDirectory()) {
+								File folder = new File(file, name);
+								System.out.println("new file " + name
+										+ "is folder " + folder.isDirectory());
+								if (folder.isDirectory()) {
+									File stringsDotXml = new File(folder,
+											"strings.xml");
+									System.out.println("new file " +stringsDotXml.getParent());
+									if (stringsDotXml.exists())
+										return true;
+									else
+										return false;
+								} else
+									return false;
+							} else {
+								return false;
+							}
+						} else
+
+							return false;
 					}
 				};
 				getAvailableLanguages(projectPath, valuesFilter);
@@ -187,7 +207,23 @@ public class EntryPoint {
 			} else {
 				langName = langName.substring(1);
 			}
-			availableLanguages[i] = langName;
+
+			// availableLanguages[i] = langName;
+			FilenameFilter stringDotXmlFilter = new FilenameFilter() {
+
+				@Override
+				public boolean accept(File file, String name) {
+					// TODO Auto-generated method stub
+					return name.contains("strings");
+				}
+			};
+
+			File[] fileNames = folderList[i].listFiles(stringDotXmlFilter);
+
+			if (fileNames.length > 0) {
+				availableLanguages[i] = langName;
+			}
+
 			// System.out.println(langName);
 		}
 		ConstantData.LANGUAGES = availableLanguages;
@@ -197,16 +233,36 @@ public class EntryPoint {
 	}
 
 	private void writeIntoFile() {
-			Iterator keysIterator = keysValueMap.keySet().iterator();
-			
-			int i =1;
-			int j=0;
-			do{
-				
-				String key = (String) keysIterator.next();
+		Iterator keysIterator = keysValueMap.keySet().iterator();
+
+		int i = 1;
+		int j = 0;
+		do {
+
+			String key = (String) keysIterator.next();
+			try {
+				String keyToEnter = key.substring("name=\"".length())
+						.replaceAll("\"", "");
+				addCell(excellSheet, 0, i, keyToEnter);
+			} catch (RowsExceededException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (WriteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			ArrayList<String> values = keysValueMap.get(key);
+
+			System.out.println(key);
+			System.out.println("{");
+			j = 1;
+			for (String string : values) {
+				System.out.println("\t\t");
+				System.out.println(string);
 				try {
-					String keyToEnter= key.substring("name=\"".length()).replaceAll("\"", "");
-					addCell(excellSheet, 0, i, keyToEnter);
+					addCell(excellSheet, j, i, string);
 				} catch (RowsExceededException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -216,41 +272,22 @@ public class EntryPoint {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-				ArrayList<String> values = keysValueMap.get(key);
-				
-				System.out.println(key);
-				System.out.println("{");
-				j=1;
-				for (String string : values) {
-					System.out.println("\t\t");
-					System.out.println(string);
-					try {
-						addCell(excellSheet, j, i, string);
-					} catch (RowsExceededException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (WriteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (Exception e) {
-						e.printStackTrace();
-					}	
-					j++;
-				}
-				System.out.println("};");
-				i++;
-			}while(keysIterator.hasNext());
-			
-			try {
-				excellFile.write();
-				excellFile.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (Exception e) {
-				// TODO: handle exception
-				e.printStackTrace();
+				j++;
 			}
+			System.out.println("};");
+			i++;
+		} while (keysIterator.hasNext());
+
+		try {
+			excellFile.write();
+			excellFile.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -288,21 +325,22 @@ public class EntryPoint {
 	 *            : List of values(-) folder.
 	 */
 	private void getColumns(File[] folderList) {
-		
+
 		try {
 			addHeaders();
 		} catch (WriteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}catch (Exception e) {
+		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();
 		}
-		
+
 		for (File valuesVersion : folderList) {
 			System.out.println("Parsing xml from " + valuesVersion.getName()
 					+ "\n");
 			if (valuesVersion.isDirectory()) {
+
 				File stringsDotXml = new File(valuesVersion, "strings.xml");
 				Document document = Utils.getXmlFromFile(stringsDotXml);
 				NodeList nodes = document.getElementsByTagName("string");
