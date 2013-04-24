@@ -392,7 +392,7 @@ public class EntryPoint {
 	private void askProjectPath() {
 		BufferedReader br;
 		System.out
-				.println("Time to enter project path (if it contains resources folder it's enough): ");
+				.println("Time to enter project path, Please make sure you give res folder's path here. (if it contains resources folder it's enough): ");
 		br = new BufferedReader(new InputStreamReader(System.in));
 		try {
 			String projectPath = br.readLine();
