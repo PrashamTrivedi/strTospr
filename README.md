@@ -19,7 +19,7 @@ How do I use this code for me?
  - We get strings.xml for all resource qualifiers. For each resoure qualifier that has strings.xml for it will have a column in the excell file
  - Every key of the strings.xml will go into rows.
  
- - We will save generated Xml file into C:/StrToSprTest/ (So as per current limitations it may not work in any OS that does not have C: Drive, Planning to resolve this feature soon)
- - Your final xml file will C:/StrToSprTest/ProjectName.xls
+ - We will save generated xls file into C:/StrToSprTest/ (So as per current limitations it may not work in any OS that does not have C: Drive, Planning to resolve this feature soon)
+ - Your final xls file will C:/StrToSprTest/ProjectName.xls
  
  And you are ready to distribute your translations.
