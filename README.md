@@ -7,19 +7,18 @@ The Project that creates a spreadsheet out of android strings.xml files. It will
 
 How do you write excell spreadsheets?
 =====================================
-Jxl Library has been used
+We use [Jxl Library](http://sourceforge.net/projects/jexcelapi/) to create xls spreadsheets.
 
-How do I use this code for me?
+How do I use this project for me?
 ===============================
- - We ask to input two parameters runtime
+ - We ask to input three parameters runtime
+	1. Parent Path : Path where your file is being saved.
+	2. Project Name : (As we refer to it) Name of the file. 
+	3. Res folder path : Path for your projects' "res" folder or it's parent folder.
 
-	1. Project Name : (As we refer to it) this will be used to enter the file name. 
-	2. Res folder path : Path for your projects' "res" folder
-
- - We get strings.xml for all resource qualifiers. For each resoure qualifier that has strings.xml for it will have a column in the excell file
+ - We get strings.xml for all resource qualifiers. 
+ - For each resoure qualifier that has strings.xml for it will have a column in the excell file. (i.e. Values will have "default" column name, Values-fr will have "fr" column name)
  - Every key of the strings.xml will go into rows.
- 
- - We will save generated xls file into C:/StrToSprTest/ (So as per current limitations it may not work in any OS that does not have C: Drive, Planning to resolve this feature soon)
- - Your final xls file will C:/StrToSprTest/ProjectName.xls
+ - We will save generated xls file as parentPath>StrToSpr>projectName.xls
  
  And you are ready to distribute your translations.
