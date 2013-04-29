@@ -65,18 +65,20 @@ public class EntryPoint {
 		BufferedReader br;
 		keysList = new HashSet<String>();
 		keysValueMap = new HashMap<String, ArrayList<String>>();
+		askFilePath();
 		askProjectName();
-
 		askProjectPath();
 
 		if (!ConstantMethods.isEmptyString(ConstantData.PROJECT_PATH)) {
 			File projectPath = new File(ConstantData.PROJECT_PATH);
 			System.out.println(projectPath + " is a folder?"
 					+ (projectPath.isDirectory() ? " yes" : " no"));
-			file = new File("C:/StrToSprTest/" + ConstantData.PROJECT_NAME
-					+ ".xls");
+			file = new File(ConstantData.PARENT_PATH + "/"
+					+ ConstantData.FOLDER_NAME + ConstantData.PROJECT_NAME
+					+ ConstantData.EXTENSION);
 			if (!file.exists()) {
-				new File("C:/StrToSprTest/").mkdir();
+				new File(ConstantData.PARENT_PATH + "/"
+						+ ConstantData.FOLDER_NAME).mkdir();
 			}
 			try {
 				WorkbookSettings settings = new WorkbookSettings();
@@ -89,7 +91,19 @@ public class EntryPoint {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			if (projectPath.getName().equalsIgnoreCase("res")) {
+			boolean isResFolder = projectPath.getName().equalsIgnoreCase("res");
+			if (!isResFolder) {
+				File[] files = projectPath.listFiles();
+				for (File file : files) {
+					if (file.getName().equalsIgnoreCase("res")
+							&& file.isDirectory()) {
+						projectPath = file;
+						isResFolder = true;
+						break;
+					}
+				}
+			}
+			if (isResFolder) {
 				System.out
 						.println("Congrats! You have just discovered a valuable treasure captain sparrow!!");
 
@@ -106,7 +120,8 @@ public class EntryPoint {
 								if (folder.isDirectory()) {
 									File stringsDotXml = new File(folder,
 											"strings.xml");
-									System.out.println("new file " +stringsDotXml.getParent());
+									System.out.println("new file "
+											+ stringsDotXml.getParent());
 									if (stringsDotXml.exists())
 										return true;
 									else
@@ -126,6 +141,22 @@ public class EntryPoint {
 			}
 		}
 
+	}
+
+	private void askFilePath() {
+		System.out
+				.println("Time to enter path where you want to save your excell file: ");
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+		try {
+			String projectName = br.readLine();
+			ConstantData.PARENT_PATH = projectName;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
 	}
 
 	private void getStringFiles(File[] valuesFolder) {
